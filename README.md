@@ -1,7 +1,7 @@
 # FollowFingerLayout
 Android :help for you use windowmanager with animation 
 
-# usage
+# Usage
 
     val root = LayoutInflater.from(applicationContext).inflate(R.layout.layout_window_player, null)
     val fingerLayout = FollowFingerLayout(root)
@@ -14,3 +14,7 @@ Android :help for you use windowmanager with animation
     params.format = PixelFormat.RGBA_8888
 
     fingerLayout.attachToWindow(params)
+    
+    
+#Effect
+![](https://github.com/leicher/FollowFingerLayout/blob/master/FollowFingerLayout.gif)
