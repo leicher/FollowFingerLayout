@@ -15,6 +15,8 @@ import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 
+import java.lang.reflect.Field;
+
 import leicher.file.ui.UiUtil;
 
 /**
@@ -61,7 +63,7 @@ public class FollowFingerLayout extends FrameLayout{
     private void init(){
         mManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         mTouchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
-        mStatusBarHeight = UiUtil.getStatusBarHeight(mContext);
+        mStatusBarHeight = getStatusBarHeight(mContext);
         DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
         mWindowWidth = metrics.widthPixels;
         mWindowHeight = metrics.heightPixels;
@@ -263,7 +265,9 @@ public class FollowFingerLayout extends FrameLayout{
             upper -= mPadding.top;
             lower += mPadding.bottom;
         }else {
-            lower = mStatusBarHeight;
+            // 不同的WindowManager.LayoutParams 的type可能 0 位置不一样,可酌情处理
+            //lower = mStatusBarHeight;
+            upper -= mStatusBarHeight;
             upper -= mPadding.bottom;
             lower += mPadding.top;
         }
@@ -292,4 +296,23 @@ public class FollowFingerLayout extends FrameLayout{
 
     }
 
+
+    /**
+     * 获取状态栏/通知栏的高度
+     *
+     * @return
+     */
+    @SuppressLint("PrivateApi")
+    public static int getStatusBarHeight(Context context) {
+        int x,bar = 0;
+        try {
+            Class<?> c = Class.forName("com.android.internal.R$dimen");
+            Field field = c.getField("status_bar_height");
+            x = Integer.parseInt(field.get(null).toString());
+            bar = context.getResources().getDimensionPixelSize(x);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return bar;
+    }
 }
