@@ -1,4 +1,4 @@
-package leicher;
+﻿package leicher;
 
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
@@ -35,6 +35,7 @@ public class FollowFingerLayout extends FrameLayout{
     private WindowManager.LayoutParams mParams;
     private boolean mFollowing = false;
     private MoveOutListener mMoveOutListener;
+    private LocationChangedListener mLocationChangedListener;
     private ValueAnimator mAnimator;
 
     private int mWindowWidth;
@@ -109,6 +110,21 @@ public class FollowFingerLayout extends FrameLayout{
         }
     }
 
+    protected void performLocationChanged(int x, int y){
+        if (mLocationChangedListener != null){
+            mLocationChangedListener.onLocationChanged(x, y);
+        }
+    }
+
+    protected void performFingerRelease(){
+        if (mLocationChangedListener != null){
+            int targetUpper = mWindowWidth - getMeasuredWidth();
+            int targetLower = 0;
+            int target = mParams.x > targetUpper ? targetUpper : mParams.x < targetLower ? targetLower : mParams.x;
+            mLocationChangedListener.onFingerRelease(target, mParams.y);
+        }
+    }
+
 
     public MoveOutListener getMoveOutListener() {
         return mMoveOutListener;
@@ -116,6 +132,14 @@ public class FollowFingerLayout extends FrameLayout{
 
     public void setMoveOutListener(MoveOutListener mMoveOutListener) {
         this.mMoveOutListener = mMoveOutListener;
+    }
+
+    public LocationChangedListener getLocationChangedListener() {
+        return mLocationChangedListener;
+    }
+
+    public void setLocationChangedListener(LocationChangedListener mLocationChangedListener) {
+        this.mLocationChangedListener = mLocationChangedListener;
     }
 
     public void detachToWindow(){
@@ -158,6 +182,7 @@ public class FollowFingerLayout extends FrameLayout{
                     mParams.y = computeY(y);
                     mManager.updateViewLayout(this, mParams);
                     invalidate();
+                    performLocationChanged(mParams.x, mParams.y);
                     mFollowing = true;
                     return false;
                 }
@@ -184,7 +209,6 @@ public class FollowFingerLayout extends FrameLayout{
 
 
     protected void reversalAnimator(){
-        boolean b = horizontalReversal();
         int targetUpper = mWindowWidth - getMeasuredWidth();
         int targetLower = 0;
         int target = mParams.x > targetUpper ? targetUpper : mParams.x < targetLower ? targetLower : mParams.x;
@@ -287,13 +311,25 @@ public class FollowFingerLayout extends FrameLayout{
         return target > upper ? upper : target < lower ? lower : target;
     }
 
-
+    /**
+     * 用于滑出屏幕移除的监听
+     */
     public interface MoveOutListener{
 
         void onStatusChange(FollowFingerLayout layout, int status);
 
         void onReMove(FollowFingerLayout layout, WindowManager manager);
 
+    }
+
+    /**
+     * 用于监听位置改变等
+     */
+    public interface LocationChangedListener{
+
+        void onLocationChanged(int x, int y);
+
+        void onFingerRelease(int x, int y);
     }
 
 
