@@ -16,5 +16,6 @@ Android :help for you use windowmanager with animation
     fingerLayout.attachToWindow(params)
     
     
-#Effect
+# Effect
+
 ![](https://github.com/leicher/FollowFingerLayout/blob/master/FollowFingerLayout.gif)
