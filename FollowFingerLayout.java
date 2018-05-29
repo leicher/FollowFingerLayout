@@ -118,8 +118,10 @@ public class FollowFingerLayout extends FrameLayout{
 
     protected void performFingerRelease(){
         if (mLocationChangedListener != null){
-            int targetUpper = mWindowWidth - getMeasuredWidth();
-            int targetLower = 0;
+            boolean start = containStart();
+            boolean right = containsRight();
+            int targetUpper = start || right ? mWindowWidth - getMeasuredWidth() : mWindowWidth / 2 -getMeasuredWidth() / 2;
+            int targetLower = start || right ? 0 : -mWindowWidth / 2 + getMeasuredWidth() / 2;
             int target = mParams.x > targetUpper ? targetUpper : mParams.x < targetLower ? targetLower : mParams.x;
             mLocationChangedListener.onFingerRelease(target, mParams.y);
         }
@@ -196,6 +198,7 @@ public class FollowFingerLayout extends FrameLayout{
                     reversalAnimator();
                 }
                 invalidate();
+                performFingerRelease();
                 break;
                 default: break;
         }
@@ -209,8 +212,10 @@ public class FollowFingerLayout extends FrameLayout{
 
 
     protected void reversalAnimator(){
-        int targetUpper = mWindowWidth - getMeasuredWidth();
-        int targetLower = 0;
+        boolean start = containStart();
+        boolean right = containsRight();
+        int targetUpper = start || right ? mWindowWidth - getMeasuredWidth() : mWindowWidth / 2 - getMeasuredWidth() / 2;
+        int targetLower = start || right ? 0 : -mWindowWidth / 2 + getMeasuredWidth() / 2;
         int target = mParams.x > targetUpper ? targetUpper : mParams.x < targetLower ? targetLower : mParams.x;
         if (target != mParams.x){
             mAnimator = ValueAnimator.ofInt(mParams.x, target);
@@ -230,7 +235,7 @@ public class FollowFingerLayout extends FrameLayout{
 
     @SuppressLint("RtlHardcoded")
     protected float computeDeltaX(float x){
-        if (horizontalReversal()){
+        if (containsRight()){
             return (mWindowWidth - x) - mParams.x;
         }
         return mDownX - mParams.x;
@@ -238,7 +243,7 @@ public class FollowFingerLayout extends FrameLayout{
 
     @SuppressLint("RtlHardcoded")
     protected float computeDeltaY(float y){
-        if (verticalReversal()){
+        if (containsBottom()){
             return (mWindowHeight - y) - mParams.y;
         }
         return y - mParams.y;
@@ -251,13 +256,17 @@ public class FollowFingerLayout extends FrameLayout{
      */
     @SuppressLint("RtlHardcoded")
     protected int computeX(float x){
-        boolean b = horizontalReversal();
-        int res = b ? (int) ((mWindowWidth - x) - mDeltaX + 0.5f) : (int) (x - mDeltaX + 0.5f);
-        int upper = mWindowWidth - getMeasuredWidth() / 2;
-        int lower = -getMeasuredWidth() / 2;
-        if (b){
+        boolean right = containsRight();
+        boolean start = containStart();
+        int res = right ? (int) ((mWindowWidth - x) - mDeltaX + 0.5f) : (int) (x - mDeltaX + 0.5f);
+        int upper = start || right ? mWindowWidth - getMeasuredWidth() / 2 : mWindowWidth / 2 ;
+        int lower = start || right ? -getMeasuredWidth() / 2 : -mWindowWidth / 2 ;
+        if (right){
             upper -= mPadding.left;
             lower += mPadding.right;
+        }else if (start){
+            upper -= mPadding.right;
+            lower += mPadding.left;
         }else {
             upper -= mPadding.right;
             lower += mPadding.left;
@@ -280,18 +289,22 @@ public class FollowFingerLayout extends FrameLayout{
      * @return
      */
     protected int computeY(float y){
-        boolean b = verticalReversal();
-        int res = b ? (int) ((mWindowHeight - y) - mDeltaY + 0.5f) : (int) (y - mDeltaY + 0.5f);
-        int upper = mWindowHeight - getMeasuredHeight();
-        int lower = 0;
-        if (b) {
+        boolean bottom = containsBottom();
+        boolean top = containTop();
+        int res = bottom ? (int) ((mWindowHeight - y) - mDeltaY + 0.5f) : (int) (y - mDeltaY + 0.5f);
+        int upper = top || bottom ? mWindowHeight - getMeasuredHeight() : (mWindowHeight - mStatusBarHeight) / 2 - getMeasuredHeight() / 2;
+        int lower = top || bottom ? 0 : -(mWindowHeight - mStatusBarHeight) / 2 + getMeasuredHeight() / 2;
+        if (bottom) {
             upper = upper - mStatusBarHeight;
             upper -= mPadding.top;
             lower += mPadding.bottom;
-        }else {
+        }else if (top){
             // 不同的WindowManager.LayoutParams 的type可能 0 位置不一样,可酌情处理
             //lower = mStatusBarHeight;
             upper -= mStatusBarHeight;
+            upper -= mPadding.bottom;
+            lower += mPadding.top;
+        }else {
             upper -= mPadding.bottom;
             lower += mPadding.top;
         }
@@ -299,12 +312,20 @@ public class FollowFingerLayout extends FrameLayout{
         return res;
     }
 
-    protected boolean horizontalReversal(){
+    protected boolean containsRight(){
         return (mParams.gravity & Gravity.RIGHT) == Gravity.RIGHT;
     }
 
-    protected boolean verticalReversal(){
+    protected boolean containsBottom(){
         return (mParams.gravity & Gravity.BOTTOM) == Gravity.BOTTOM;
+    }
+
+    protected boolean containStart(){
+        return (mParams.gravity & Gravity.LEFT) == Gravity.LEFT;
+    }
+
+    protected boolean containTop(){
+        return (mParams.gravity & Gravity.TOP) == Gravity.TOP;
     }
 
     private static int limit(int target, int upper, int lower){
